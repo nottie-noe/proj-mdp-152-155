@@ -24,7 +24,7 @@ pipeline {
         stage('Push to Docker Hub') {
             steps {
                 script {
-                    docker.withRegistry('https://registry.hub.docker.com', 'docker-hub-credentials')
+                    docker.withRegistry('https://registry.hub.docker.com', 'docker-hub-credentials') {
                         docker.image("${DOCKER_IMAGE}:${env.BUILD_ID}").push()
                         docker.image("${DOCKER_IMAGE}:${env.BUILD_ID}").push('latest')
                     }
@@ -40,7 +40,7 @@ pipeline {
                     "docker pull ${DOCKER_IMAGE}:latest && \
                     docker stop calculator-app || true && \
                     docker rm calculator-app || true && \
-                    docker run -d --name calculator-app -p 8083:8080 ${DOCKER_IMAGE:latest}
+                    docker run -d --name calculator-app -p 8083:8080 ${DOCKER_IMAGE}:latest"
                     """
                 }
             }
@@ -52,9 +52,12 @@ pipeline {
             sh 'docker system prune -f'
         }
         success {
-            slackSend color: 'good', message: "Build ${env.BUILD_NUMBER} succeeded!"
+            slackSend color: 'good', 
+                     message: "Build ${env.BUILD_NUMBER} succeeded!"
         }
         failure {
-            slackSend color: 'danger', message: "Build ${env.BUILD_NUMBER} failed!"
+            slackSend color: 'danger', 
+                     message: "Build ${env.BUILD_NUMBER} failed!"
         }
     }
+}
