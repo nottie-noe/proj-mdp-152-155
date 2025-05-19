@@ -1,69 +1,61 @@
 pipeline {
     agent any
-
     environment {
-        IMAGE_NAME = 'nottiey/javacal-webapp'
-        IMAGE_TAG = "${env.BUILD_NUMBER}"
-        DOCKER_CREDS = 'docker-hub-credentials' // Credentials ID in Jenkins
+        DOCKER_HUB_CREDENTIALS = credentials('docker-hub-credentials')
+        DOCKER_IMAGE = "javacal"
+        TOMCAT_SERVER_IP = "54.86.21.245"
     }
-
-    triggers {
-        pollSCM('* * * * *') // Check for changes every minute (you can adjust this)
-    }
-
     stages {
         stage('Checkout') {
             steps {
-                git branch: 'project-1', url: 'https://github.com/nottie-noe/proj-mdp-152-155.git'
+                git branch: 'project-1', 
+                     url: 'https://github.com/nottie-noe/proj-mdp-152-155.git'
             }
         }
-
-        stage('Build WAR using Docker Maven') {
+        
+        stage('Build with Docker') {
             steps {
-                echo 'Building WAR file using Maven in Docker...'
-                sh '''
-                    docker run --rm -v "$PWD":/app -w /app maven:3.8.5-openjdk-8 mvn clean package
-                '''
-            }
-        }
-
-        stage('Build Docker Image') {
-            steps {
-                echo 'Building Docker image from multi-stage Dockerfile...'
-                sh "docker build -t ${IMAGE_NAME}:${IMAGE_TAG} ."
-            }
-        }
-
-        stage('Push to Docker Hub') {
-            steps {
-                withCredentials([usernamePassword(credentialsId: "${DOCKER_CREDS}", usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                    sh '''
-                        echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
-                        docker push ${IMAGE_NAME}:${IMAGE_TAG}
-                        docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${IMAGE_NAME}:latest
-                        docker push ${IMAGE_NAME}:latest
-                    '''
+                script {
+                    docker.build("${DOCKER_IMAGE}:${env.BUILD_ID}")
                 }
             }
         }
-
-        stage('Deploy Container') {
+        
+        stage('Push to Docker Hub') {
             steps {
-                echo 'Stopping and removing old container if it exists, then deploying new one...'
-                sh '''
-                    docker rm -f javacal-container || true
-                    docker run -d --name javacal-container -p 8083:8080 ${IMAGE_NAME}:${IMAGE_TAG}
-                '''
+                script {
+                    docker.withRegistry('https://registry.hub.docker.com', 'docker-hub-creds') {
+                        docker.image("${DOCKER_IMAGE}:${env.BUILD_ID}").push()
+                        docker.image("${DOCKER_IMAGE}:${env.BUILD_ID}").push('latest')
+                    }
+                }
+            }
+        }
+        
+        stage('Deploy to Tomcat') {
+            steps {
+                sshagent(['tomcat-ssh-key']) {
+                    sh """
+                    ssh -o StrictHostKeyChecking=no ec2-user@${TOMCAT_SERVER_IP} \
+                    "docker pull ${DOCKER_IMAGE}:latest && \
+                    docker stop calculator-app || true && \
+                    docker rm calculator-app || true && \
+                    docker run -d --name calculator-app -p 8083:8080 ${DOCKER_IMAGE:latest}
+                    """
+                }
             }
         }
     }
-
+    
     post {
+        always {
+            sh 'docker system prune -f'
+        }
         success {
-            echo "Build and deployment successful. App is running on http://<Jenkins-Server-IP>:8083"
+            slackSend color: 'good', message: "Build ${env.BUILD_NUMBER} succeeded!"
         }
         failure {
-            echo "Build or deployment failed. Check logs above."
+            slackSend color: 'danger', message: "Build ${env.BUILD_NUMBER} failed!"
         }
     }
 }
