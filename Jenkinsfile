@@ -2,9 +2,9 @@ pipeline {
     agent any
 
     environment {
-        IMAGE_NAME = 'your-dockerhub-username/javacal-webapp'
+        IMAGE_NAME = 'nottiey/javacal-webapp'
         IMAGE_TAG = "${env.BUILD_NUMBER}"
-        DOCKER_CREDS = 'dockerhub-creds' // Credentials ID in Jenkins
+        DOCKER_CREDS = 'docker-hub-credentials' // Credentials ID in Jenkins
     }
 
     triggers {
@@ -14,7 +14,7 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                git branch: 'project-1', url: 'https://github.com/your-username/proj-mdp-152-155.git'
+                git branch: 'project-1', url: 'https://github.com/nottie-noe/proj-mdp-152-155.git'
             }
         }
 
@@ -52,7 +52,7 @@ pipeline {
                 echo 'Stopping and removing old container if it exists, then deploying new one...'
                 sh '''
                     docker rm -f javacal-container || true
-                    docker run -d --name javacal-container -p 8080:8080 ${IMAGE_NAME}:${IMAGE_TAG}
+                    docker run -d --name javacal-container -p 8083:8080 ${IMAGE_NAME}:${IMAGE_TAG}
                 '''
             }
         }
@@ -60,11 +60,10 @@ pipeline {
 
     post {
         success {
-            echo "Build and deployment successful. App is running on http://<Jenkins-Server-IP>:8080"
+            echo "Build and deployment successful. App is running on http://<Jenkins-Server-IP>:8083"
         }
         failure {
             echo "Build or deployment failed. Check logs above."
         }
     }
 }
-
