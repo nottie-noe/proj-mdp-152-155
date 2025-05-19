@@ -58,4 +58,3 @@ pipeline {
             slackSend color: 'danger', message: "Build ${env.BUILD_NUMBER} failed!"
         }
     }
-}
