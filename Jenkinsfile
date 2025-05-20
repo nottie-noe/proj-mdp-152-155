@@ -1,40 +1,39 @@
 pipeline {
     agent any
+
     environment {
         DOCKER_HUB_CREDENTIALS = credentials('docker-hub-credentials')
         DOCKER_IMAGE = "nottiey/javacalc-webapp"
         TOMCAT_SERVER_IP = "54.86.21.245"
     }
+
     stages {
         stage('Checkout') {
             steps {
                 git branch: 'project-1', 
-                     url: 'https://github.com/nottie-noe/proj-mdp-152-155.git'
+                    url: 'https://github.com/nottie-noe/proj-mdp-152-155.git'
             }
         }
-        
+
         stage('Build with Docker') {
             steps {
                 script {
-                    // Build with both BUILD_ID and latest tags
                     docker.build("${DOCKER_IMAGE}:${env.BUILD_ID}")
-                    docker.image("${DOCKER_IMAGE}:${env.BUILD_ID}").tag('latest')
                 }
             }
         }
-        
+
         stage('Push to Docker Hub') {
             steps {
                 script {
                     docker.withRegistry('https://registry.hub.docker.com', 'docker-hub-credentials') {
-                        // Push both tags
                         docker.image("${DOCKER_IMAGE}:${env.BUILD_ID}").push()
-                        docker.image("${DOCKER_IMAGE}:latest").push()
+                        docker.image("${DOCKER_IMAGE}:${env.BUILD_ID}").push('latest')
                     }
                 }
             }
         }
-        
+
         stage('Deploy to Tomcat') {
             steps {
                 script {
@@ -45,20 +44,21 @@ pipeline {
                     )]) {
                         sh """
                             chmod 600 \$SSH_KEY
-                            eval \$(ssh-agent)
+                            eval \$(ssh-agent -s)
                             ssh-add \$SSH_KEY
-                            ssh -o StrictHostKeyChecking=no ${SSH_USER}@${TOMCAT_SERVER_IP} \\
-                                "docker pull ${DOCKER_IMAGE}:latest && \\
-                                docker stop calculator-app || true && \\
-                                docker rm calculator-app || true && \\
-                                docker run -d --name calculator-app -p 8083:8080 ${DOCKER_IMAGE}:latest"
+                            ssh -o StrictHostKeyChecking=no \$SSH_USER@${TOMCAT_SERVER_IP} '
+                                docker pull ${DOCKER_IMAGE}:latest &&
+                                docker stop calculator-app || true &&
+                                docker rm calculator-app || true &&
+                                docker run -d --name calculator-app -p 8083:8080 ${DOCKER_IMAGE}:latest
+                            '
                         """
                     }
                 }
             }
         }
     }
-    
+
     post {
         always {
             sh 'docker system prune -f'
@@ -67,16 +67,14 @@ pipeline {
             slackSend(
                 color: 'good',
                 message: "✅ Build #${env.BUILD_NUMBER} succeeded! (<${env.BUILD_URL}|Open>)",
-                tokenCredentialId: 'slack-webhook',
-                channel: '@U062H8XT75F'  // Replace with your Slack user ID
+                tokenCredentialId: 'slack-webhook'
             )
         }
         failure {
             slackSend(
                 color: 'danger',
                 message: "❌ Build #${env.BUILD_NUMBER} failed! (<${env.BUILD_URL}|Open>)",
-                tokenCredentialId: 'slack-webhook',
-                channel: '@U062H8XTZ5F'  // Replace with your Slack user ID
+                tokenCredentialId: 'slack-webhook'
             )
         }
     }
