@@ -49,7 +49,7 @@ pipeline {
                             docker stop webapp || true
                             docker rm webapp || true
                             docker run -d -p $REMOTE_DOCKER_PORT:8080 --name webapp $IMAGE_NAME:$TAG
-                        EOF
+         EOF               
                     """
                 }
             }
