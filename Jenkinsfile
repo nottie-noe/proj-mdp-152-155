@@ -16,7 +16,9 @@ pipeline {
         stage('Build with Docker') {
             steps {
                 script {
+                    // Build with both BUILD_ID and latest tags
                     docker.build("${DOCKER_IMAGE}:${env.BUILD_ID}")
+                    docker.image("${DOCKER_IMAGE}:${env.BUILD_ID}").tag('latest')
                 }
             }
         }
@@ -25,8 +27,9 @@ pipeline {
             steps {
                 script {
                     docker.withRegistry('https://registry.hub.docker.com', 'docker-hub-credentials') {
+                        // Push both tags
                         docker.image("${DOCKER_IMAGE}:${env.BUILD_ID}").push()
-                        docker.image("${DOCKER_IMAGE}:${env.BUILD_ID}").push('latest')
+                        docker.image("${DOCKER_IMAGE}:latest").push()
                     }
                 }
             }
@@ -44,17 +47,17 @@ pipeline {
                             chmod 600 \$SSH_KEY
                             eval \$(ssh-agent)
                             ssh-add \$SSH_KEY
-                            ssh -o StrictHostKeyChecking=no ${SSH_USER}@${TOMCAT_SERVER_IP} \
-                                "docker pull ${DOCKER_IMAGE}:latest && \
-                                docker stop calculator-app || true && \
-                                docker rm calculator-app || true && \
+                            ssh -o StrictHostKeyChecking=no ${SSH_USER}@${TOMCAT_SERVER_IP} \\
+                                "docker pull ${DOCKER_IMAGE}:latest && \\
+                                docker stop calculator-app || true && \\
+                                docker rm calculator-app || true && \\
                                 docker run -d --name calculator-app -p 8083:8080 ${DOCKER_IMAGE}:latest"
                         """
                     }
                 }
             }
         }
-    }  // ← Closing brace for stages
+    }
     
     post {
         always {
@@ -64,15 +67,17 @@ pipeline {
             slackSend(
                 color: 'good',
                 message: "✅ Build #${env.BUILD_NUMBER} succeeded! (<${env.BUILD_URL}|Open>)",
-                tokenCredentialId: 'slack-webhook'
+                tokenCredentialId: 'slack-webhook',
+                channel: '@UYOURSLACKID'  // Replace with your Slack user ID
             )
         }
         failure {
             slackSend(
                 color: 'danger',
                 message: "❌ Build #${env.BUILD_NUMBER} failed! (<${env.BUILD_URL}|Open>)",
-                tokenCredentialId: 'slack-webhook'
+                tokenCredentialId: 'slack-webhook',
+                channel: '@UYOURSLACKID'  // Replace with your Slack user ID
             )
         }
     }
-}  // ← Closing brace for pipeline
+}
