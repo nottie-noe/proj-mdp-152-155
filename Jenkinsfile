@@ -57,19 +57,22 @@ EOF
     }
 
     post {
-        success {
-            echo "✅ Deployment successful! App should be live at http://$REMOTE_HOST:$REMOTE_DOCKER_PORT"
+    success {
+        echo "✅ Deployment successful! App should be live at http://$REMOTE_HOST:$REMOTE_DOCKER_PORT"
 
-            slackSend (
-                channel: '@U062H8XT75F',
-                color: 'good',
-                message: "✅ SUCCESS: Pipeline `${env.JOB_NAME} #${env.BUILD_NUMBER}` deployed successfully.\n🔗 http://$REMOTE_HOST:$REMOTE_DOCKER_PORT"
-            )
+        // Email success
+        mail to: 'you@example.com',
+             subject: "SUCCESS: Jenkins Build #${env.BUILD_NUMBER}",
+             body: "The Jenkins build was successful.\nApplication deployed at: http://$REMOTE_HOST:$REMOTE_DOCKER_PORT"
+    }
 
-            mail to: 'thandonoe.ndlovu@gmail.com',
-                 subject: "SUCCESS: Jenkins Build #${env.BUILD_NUMBER}",
-                 body: "The Jenkins build was successful.\nApplication deployed at: http://$REMOTE_HOST:$REMOTE_DOCKER_PORT"
-        }
+    failure {
+        echo "❌ Pipeline failed!"
+
+        // Email failure
+        mail to: 'you@example.com',
+             subject: "FAILURE: Jenkins Build #${env.BUILD_NUMBER}",
+             body: "The Jenkins build has failed. Please investigate the job: ${env.BUILD_URL}"
     }
 }
-    
+
