@@ -34,30 +34,45 @@ pipeline {
         
         stage('Deploy to Tomcat') {
             steps {
-                sshagent(['tomcat-ssh-key']) {
-                    sh """
-                    ssh -o StrictHostKeyChecking=no ec2-user@${TOMCAT_SERVER_IP} \
-                    "docker pull ${DOCKER_IMAGE}:latest && \
-                    docker stop calculator-app || true && \
-                    docker rm calculator-app || true && \
-                    docker run -d --name calculator-app -p 8083:8080 ${DOCKER_IMAGE}:latest"
-                    """
+                script {
+                    withCredentials([sshUserPrivateKey(
+                        credentialsId: 'tomcat-ssh-key',
+                        keyFileVariable: 'SSH_KEY',
+                        usernameVariable: 'SSH_USER'
+                    )]) {
+                        sh """
+                            chmod 600 \$SSH_KEY
+                            eval \$(ssh-agent)
+                            ssh-add \$SSH_KEY
+                            ssh -o StrictHostKeyChecking=no ${SSH_USER}@${TOMCAT_SERVER_IP} \
+                                "docker pull ${DOCKER_IMAGE}:latest && \
+                                docker stop calculator-app || true && \
+                                docker rm calculator-app || true && \
+                                docker run -d --name calculator-app -p 8083:8080 ${DOCKER_IMAGE}:latest"
+                        """
+                    }
                 }
             }
         }
-    }
+    }  // ← Closing brace for stages
     
     post {
         always {
             sh 'docker system prune -f'
         }
         success {
-            slackSend color: 'good', 
-                     message: "Build ${env.BUILD_NUMBER} succeeded!"
+            slackSend(
+                color: 'good',
+                message: "✅ Build #${env.BUILD_NUMBER} succeeded! (<${env.BUILD_URL}|Open>)",
+                tokenCredentialId: 'slack-webhook'
+            )
         }
         failure {
-            slackSend color: 'danger', 
-                     message: "Build ${env.BUILD_NUMBER} failed!"
+            slackSend(
+                color: 'danger',
+                message: "❌ Build #${env.BUILD_NUMBER} failed! (<${env.BUILD_URL}|Open>)",
+                tokenCredentialId: 'slack-webhook'
+            )
         }
     }
-}
+}  // ← Closing brace for pipeline
