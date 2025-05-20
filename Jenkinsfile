@@ -68,7 +68,7 @@ pipeline {
                 color: 'good',
                 message: "✅ Build #${env.BUILD_NUMBER} succeeded! (<${env.BUILD_URL}|Open>)",
                 tokenCredentialId: 'slack-webhook',
-                channel: '@UYOURSLACKID'  // Replace with your Slack user ID
+                channel: '@U062H8XT75F'  // Replace with your Slack user ID
             )
         }
         failure {
@@ -76,7 +76,7 @@ pipeline {
                 color: 'danger',
                 message: "❌ Build #${env.BUILD_NUMBER} failed! (<${env.BUILD_URL}|Open>)",
                 tokenCredentialId: 'slack-webhook',
-                channel: '@UYOURSLACKID'  // Replace with your Slack user ID
+                channel: '@U062H8XTZ5F'  // Replace with your Slack user ID
             )
         }
     }
