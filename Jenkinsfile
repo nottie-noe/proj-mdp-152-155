@@ -46,7 +46,7 @@ pipeline {
                             chmod 600 \$SSH_KEY
                             eval \$(ssh-agent -s)
                             ssh-add \$SSH_KEY
-                            ssh -o StrictHostKeyChecking=no \$SSH_USER@${TOMCAT_SERVER_IP} '
+                            ssh -o StrictHostKeyChecking=no "${SSH_USER}@${TOMCAT_SERVER_IP}" '
                                 docker pull ${DOCKER_IMAGE}:latest &&
                                 docker stop calculator-app || true &&
                                 docker rm calculator-app || true &&
