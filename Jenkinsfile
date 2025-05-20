@@ -2,7 +2,7 @@ pipeline {
     agent any
     environment {
         DOCKER_HUB_CREDENTIALS = credentials('docker-hub-credentials')
-        DOCKER_IMAGE = "javacal"
+        DOCKER_IMAGE = "nottiey/javacalc-webapp"
         TOMCAT_SERVER_IP = "54.86.21.245"
     }
     stages {
