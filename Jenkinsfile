@@ -70,19 +70,6 @@ EOF
                  subject: "SUCCESS: Jenkins Build #${env.BUILD_NUMBER}",
                  body: "The Jenkins build was successful.\nApplication deployed at: http://$REMOTE_HOST:$REMOTE_DOCKER_PORT"
         }
-
-        failure {
-            echo "❌ Pipeline failed!"
-
-            slackSend (
-                channel: '@U062H8XT75F',
-                color: 'danger',
-                message: "❌ FAILURE: Pipeline `${env.JOB_NAME} #${env.BUILD_NUMBER}` failed.\nPlease check Jenkins logs."
-            )
-
-            mail to: 'thandonoe.ndlovu@gmail.com',
-                 subject: "FAILURE: Jenkins Build #${env.BUILD_NUMBER}",
-                 body: "The Jenkins build failed.\nCheck the Jenkins console output for details."
-        }
     }
 }
+    
