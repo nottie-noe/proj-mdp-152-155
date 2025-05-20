@@ -41,20 +41,19 @@ pipeline {
         }
 
         stage('Deploy to Tomcat Server') {
-            steps {
-                sshagent (credentials: ["$SSH_CRED_ID"]) {
-                    sh """
-                        ssh -o StrictHostKeyChecking=no $REMOTE_USER@$REMOTE_HOST << EOF
-                            docker pull $IMAGE_NAME:$TAG
-                            docker stop webapp || true
-                            docker rm webapp || true
-                            docker run -d -p $REMOTE_DOCKER_PORT:8080 --name webapp $IMAGE_NAME:$TAG
-         EOF               
-                    """
-                }
-            }
+    steps {
+        sshagent (credentials: ["$SSH_CRED_ID"]) {
+            sh """
+ssh -o StrictHostKeyChecking=no $REMOTE_USER@$REMOTE_HOST << EOF
+docker pull $IMAGE_NAME:$TAG
+docker stop webapp || true
+docker rm webapp || true
+docker run -d -p $REMOTE_DOCKER_PORT:8080 --name webapp $IMAGE_NAME:$TAG
+EOF
+            """
         }
     }
+}
 
     post {
         success {
