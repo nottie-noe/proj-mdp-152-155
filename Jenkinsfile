@@ -61,7 +61,7 @@ EOF
             echo "✅ Deployment successful! App should be live at http://$REMOTE_HOST:$REMOTE_DOCKER_PORT"
 
             // Email success
-            mail to: 'you@example.com',
+            mail to: 'thandonoe.ndlovu@gmail.com',
                  subject: "SUCCESS: Jenkins Build #${env.BUILD_NUMBER}",
                  body: "The Jenkins build was successful.\nApplication deployed at: http://$REMOTE_HOST:$REMOTE_DOCKER_PORT"
         }
@@ -70,7 +70,7 @@ EOF
             echo "❌ Pipeline failed!"
 
             // Email failure
-            mail to: 'you@example.com',
+            mail to: 'thandonoe.ndlovu@gmail.com',
                  subject: "FAILURE: Jenkins Build #${env.BUILD_NUMBER}",
                  body: "The Jenkins build has failed. Please investigate the job: ${env.BUILD_URL}"
         }
