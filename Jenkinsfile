@@ -42,9 +42,9 @@ pipeline {
 
         stage('Deploy to Tomcat Server') {
             steps {
-                sshagent (credentials: [env.SSH_CRED_ID]) {
+                sshagent(credentials: [env.SSH_CRED_ID]) {
                     sh """
-ssh -o StrictHostKeyChecking=no $REMOTE_USER@$REMOTE_HOST << 'EOF'
+ssh -o StrictHostKeyChecking=no $REMOTE_USER@$REMOTE_HOST << EOF
 docker pull $IMAGE_NAME:$TAG
 docker stop webapp || true
 docker rm webapp || true
@@ -57,22 +57,22 @@ EOF
     }
 
     post {
-    success {
-        echo "✅ Deployment successful! App should be live at http://$REMOTE_HOST:$REMOTE_DOCKER_PORT"
+        success {
+            echo "✅ Deployment successful! App should be live at http://$REMOTE_HOST:$REMOTE_DOCKER_PORT"
 
-        // Email success
-        mail to: 'you@example.com',
-             subject: "SUCCESS: Jenkins Build #${env.BUILD_NUMBER}",
-             body: "The Jenkins build was successful.\nApplication deployed at: http://$REMOTE_HOST:$REMOTE_DOCKER_PORT"
-    }
+            // Email success
+            mail to: 'you@example.com',
+                 subject: "SUCCESS: Jenkins Build #${env.BUILD_NUMBER}",
+                 body: "The Jenkins build was successful.\nApplication deployed at: http://$REMOTE_HOST:$REMOTE_DOCKER_PORT"
+        }
 
-    failure {
-        echo "❌ Pipeline failed!"
+        failure {
+            echo "❌ Pipeline failed!"
 
-        // Email failure
-        mail to: 'you@example.com',
-             subject: "FAILURE: Jenkins Build #${env.BUILD_NUMBER}",
-             body: "The Jenkins build has failed. Please investigate the job: ${env.BUILD_URL}"
+            // Email failure
+            mail to: 'you@example.com',
+                 subject: "FAILURE: Jenkins Build #${env.BUILD_NUMBER}",
+                 body: "The Jenkins build has failed. Please investigate the job: ${env.BUILD_URL}"
+        }
     }
 }
-
