@@ -46,7 +46,7 @@ pipeline {
                             chmod 600 \$SSH_KEY
                             eval \$(ssh-agent -s)
                             ssh-add \$SSH_KEY
-                            ssh -o StrictHostKeyChecking=no "${SSH_USER}@${TOMCAT_SERVER_IP}" '
+                            ssh -o StrictHostKeyChecking=no ${SSH_USER}@${TOMCAT_SERVER_IP} '
                                 docker pull ${DOCKER_IMAGE}:latest &&
                                 docker stop calculator-app || true &&
                                 docker rm calculator-app || true &&
@@ -67,14 +67,16 @@ pipeline {
             slackSend(
                 color: 'good',
                 message: "✅ Build #${env.BUILD_NUMBER} succeeded! (<${env.BUILD_URL}|Open>)",
-                tokenCredentialId: 'slack-webhook'
+                tokenCredentialId: 'slack-webhook',
+                channel: '@U062H8XT75F'  // Replace with your Slack user ID
             )
         }
         failure {
             slackSend(
                 color: 'danger',
                 message: "❌ Build #${env.BUILD_NUMBER} failed! (<${env.BUILD_URL}|Open>)",
-                tokenCredentialId: 'slack-webhook'
+                tokenCredentialId: 'slack-webhook',
+                channel: '@U062H8XT75F'  // Replace with your Slack user ID
             )
         }
     }
