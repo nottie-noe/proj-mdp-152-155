@@ -41,32 +41,31 @@ pipeline {
         }
 
         stage('Deploy to Tomcat Server') {
-    steps {
-        sshagent (credentials: ["$SSH_CRED_ID"]) {
-            sh """
-ssh -o StrictHostKeyChecking=no $REMOTE_USER@$REMOTE_HOST << EOF
+            steps {
+                sshagent (credentials: [env.SSH_CRED_ID]) {
+                    sh """
+ssh -o StrictHostKeyChecking=no $REMOTE_USER@$REMOTE_HOST << 'EOF'
 docker pull $IMAGE_NAME:$TAG
 docker stop webapp || true
 docker rm webapp || true
 docker run -d -p $REMOTE_DOCKER_PORT:8080 --name webapp $IMAGE_NAME:$TAG
 EOF
-            """
+                    """
+                }
+            }
         }
     }
-}
 
     post {
         success {
             echo "✅ Deployment successful! App should be live at http://$REMOTE_HOST:$REMOTE_DOCKER_PORT"
 
-            // Slack success notification
             slackSend (
                 channel: '@U062H8XT75F',
                 color: 'good',
                 message: "✅ SUCCESS: Pipeline `${env.JOB_NAME} #${env.BUILD_NUMBER}` deployed successfully.\n🔗 http://$REMOTE_HOST:$REMOTE_DOCKER_PORT"
             )
 
-            // Email success
             mail to: 'thandonoe.ndlovu@gmail.com',
                  subject: "SUCCESS: Jenkins Build #${env.BUILD_NUMBER}",
                  body: "The Jenkins build was successful.\nApplication deployed at: http://$REMOTE_HOST:$REMOTE_DOCKER_PORT"
@@ -75,17 +74,15 @@ EOF
         failure {
             echo "❌ Pipeline failed!"
 
-            // Slack failure notification
             slackSend (
                 channel: '@U062H8XT75F',
                 color: 'danger',
-                message: "❌ FAILURE: Pipeline `${env.JOB_NAME} #${env.BUILD_NUMBER}` failed. Please check Jenkins logs."
+                message: "❌ FAILURE: Pipeline `${env.JOB_NAME} #${env.BUILD_NUMBER}` failed.\nPlease check Jenkins logs."
             )
 
-            // Email failure
             mail to: 'thandonoe.ndlovu@gmail.com',
                  subject: "FAILURE: Jenkins Build #${env.BUILD_NUMBER}",
-                 body: "The Jenkins build has failed. Please investigate the job: ${env.BUILD_URL}"
+                 body: "The Jenkins build failed.\nCheck the Jenkins console output for details."
         }
     }
 }
