@@ -1,22 +1,40 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: javacal-deployment
-  labels:
-    app: javacal
+  name: calculator-deployment
 spec:
   replicas: 2
   selector:
     matchLabels:
-      app: javacal
+      app: calculator
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+    type: RollingUpdate
   template:
     metadata:
       labels:
-        app: javacal
+        app: calculator
     spec:
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+              - key: app
+                operator: In
+                values:
+                - calculator
+            topologyKey: "topology.kubernetes.io/zone"
       containers:
-      - name: javacal-container
+      - name: calculator-app
         image: nottiey/javacal-webapp:latest
         ports:
         - containerPort: 8080
-
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 8080
+          initialDelaySeconds: 15
+          periodSeconds: 5

@@ -3,19 +3,22 @@ pipeline {
 
     environment {
         IMAGE_NAME = 'nottiey/javacal-webapp'
-        TAG = 'latest'
+        TAG = "${env.BUILD_NUMBER}"
+        CLUSTER_NAME = 'your-cluster-name'  // Update with your cluster name
+        KOPS_STATE_STORE = 's3://your-s3-bucket'  // Update with your S3 bucket
+        AWS_REGION = 'us-east-1'  // Update your region
     }
 
     stages {
         stage('Clone Code') {
             steps {
-                git branch: 'project-3', url: 'https://github.com/nottie-noe/proj-mdp-152-155.git'
+                git branch: 'project-1', url: 'https://github.com/nottie-noe/proj-mdp-152-155.git'
             }
         }
 
-        stage('Build with Maven') {
+        stage('Build with Maven (in Docker)') {
             steps {
-                sh 'docker run --rm -v "$PWD":/app -w /app maven:3.8.5-openjdk-8 mvn clean package'
+                sh 'docker run --rm -v "$PWD":/app -w /app maven:3.8.1-openjdk-8 mvn clean package'
             }
         }
 
@@ -38,21 +41,48 @@ pipeline {
 
         stage('Deploy to Kubernetes') {
             steps {
-                sh '''
-                    kubectl apply -f deployment.yaml
-                    kubectl apply -f service.yaml
-                '''
+                withCredentials([file(credentialsId: 'kubeconfig', variable: 'KUBECONFIG')]) {
+                    sh """
+                        # Configure kubectl
+                        export KUBECONFIG=${KUBECONFIG}
+                        kops export kubecfg --name ${CLUSTER_NAME} --state ${KOPS_STATE_STORE}
+
+                        # Update image version in deployment
+                        sed -i "s|image:.*|image: ${IMAGE_NAME}:${TAG}|g" kubernetes/deployment.yaml
+
+                        # Apply Kubernetes manifests
+                        kubectl apply -f kubernetes/deployment.yaml
+                        kubectl apply -f kubernetes/service.yaml
+
+                        # Wait for rollout
+                        kubectl rollout status deployment/calculator-deployment
+                    """
+                }
             }
         }
     }
 
     post {
         success {
-            echo "✅ App deployed successfully to Kubernetes!"
+            script {
+                def lb_dns = sh(
+                    script: "kubectl get service calculator-service -o jsonpath='{.status.loadBalancer.ingress[0].hostname}'",
+                    returnStdout: true
+                ).trim()
+                
+                echo "✅ Deployment successful! App should be live at http://${lb_dns}"
+                
+                mail to: 'thandonoe.ndlovu@gmail.com',
+                     subject: "SUCCESS: Jenkins Build #${env.BUILD_NUMBER}",
+                     body: "The Jenkins build was successful.\nApplication deployed at: http://${lb_dns}"
+            }
         }
+
         failure {
-            echo "❌ Deployment failed!"
+            echo "❌ Pipeline failed!"
+            mail to: 'thandonoe.ndlovu@gmail.com',
+                 subject: "FAILURE: Jenkins Build #${env.BUILD_NUMBER}",
+                 body: "The Jenkins build has failed. Please investigate the job: ${env.BUILD_URL}"
         }
     }
 }
-
