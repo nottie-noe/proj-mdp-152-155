@@ -127,4 +127,6 @@ terraform/*
 !terraform/javacalculator/
 !terraform/javacalculator/*.tf
 
+# Optionally allow ansible folder
+!ansible/
 
