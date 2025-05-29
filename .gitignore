@@ -123,6 +123,10 @@ Temporary Items
 # Ignore all files inside terraform/
 terraform/*
 
+# Then unignore specific folders/files
+!terraform/pythonapp/
+!terraform/pythonapp/*.tf
+
 # EXCEPT: allow tracking .tf files inside terraform/javacalculator/
 !terraform/javacalculator/
 !terraform/javacalculator/*.tf
