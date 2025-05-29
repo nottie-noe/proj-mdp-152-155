@@ -113,3 +113,18 @@ Icon
 Network Trash Folder
 Temporary Items
 .apdisk
+
+# Ignore Terraform state and sensitive files
+*.tfstate
+*.tfstate.backup
+*.tfvars
+.terraform/
+
+# Ignore all files inside terraform/
+terraform/*
+
+# EXCEPT: allow tracking .tf files inside terraform/javacalculator/
+!terraform/javacalculator/
+!terraform/javacalculator/*.tf
+
+
