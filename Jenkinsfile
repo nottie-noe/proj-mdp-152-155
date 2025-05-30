@@ -4,15 +4,15 @@ pipeline {
     environment {
         IMAGE_NAME = 'nottiey/javacal-webapp'
         TAG = "${env.BUILD_NUMBER}"
-        CLUSTER_NAME = 'your-cluster-name'  // Update with your cluster name
-        KOPS_STATE_STORE = 's3://your-s3-bucket'  // Update with your S3 bucket
+        CLUSTER_NAME = 'prod-cluster.k8s.local'  // Update with your cluster name
+        KOPS_STATE_STORE = 's3://kopscluster-state-bucket'  // Update with your S3 bucket
         AWS_REGION = 'us-east-1'  // Update your region
     }
 
     stages {
         stage('Clone Code') {
             steps {
-                git branch: 'project-1', url: 'https://github.com/nottie-noe/proj-mdp-152-155.git'
+                git branch: 'project-3', url: 'https://github.com/nottie-noe/proj-mdp-152-155.git'
             }
         }
 
