@@ -48,11 +48,11 @@ pipeline {
                         kops export kubecfg --name ${CLUSTER_NAME} --state ${KOPS_STATE_STORE}
 
                         # Update image version in deployment
-                        sed -i "s|image:.*|image: ${IMAGE_NAME}:${TAG}|g" deployment.yaml
+                        sed -i "s|image:.*|image: ${IMAGE_NAME}:${TAG}|g" deployment.yml
 
                         # Apply Kubernetes manifests
-                        kubectl apply -f deployment.yaml
-                        kubectl apply -f service.yaml
+                        kubectl apply -f deployment.yml
+                        kubectl apply -f service.yml
 
                         # Wait for rollout
                         kubectl rollout status deployment/calculator-deployment
