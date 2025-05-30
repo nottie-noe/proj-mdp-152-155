@@ -41,25 +41,23 @@ pipeline {
 
         stage('Deploy to Kubernetes') {
             steps {
-                withCredentials([file(credentialsId: 'kubeconfig', variable: 'KUBECONFIG')]) {
-                    sh """
-                        # Configure kubectl
-                        export KUBECONFIG=${KUBECONFIG}
-                        kops export kubecfg --name ${CLUSTER_NAME} --state ${KOPS_STATE_STORE}
+                withCredentials([file(credentialsId: 'kubeconfig', variable: 'KUBECONFIG_FILE')]) {
+                    sh '''
+                    export KUBECONFIG="$KUBECONFIG_FILE"
+                    # If you must run kops, ensure CLI and AWS creds available
+                    # kops export kubecfg --name ${CLUSTER_NAME} --state ${KOPS_STATE_STORE}
 
-                        # Update image version in deployment
-                        sed -i "s|image:.*|image: ${IMAGE_NAME}:${TAG}|g" deployment.yml
+                    sed -i "s|image:.*|image: ${IMAGE_NAME}:${TAG}|g" deployment.yml
 
-                        # Apply Kubernetes manifests
-                        kubectl apply -f deployment.yml
-                        kubectl apply -f service.yml
+                    kubectl apply -f deployment.yml
+                    kubectl apply -f service.yml
 
-                        # Wait for rollout
-                        kubectl rollout status deployment/calculator-deployment
-                    """
-                }
-            }
+                    kubectl rollout status deployment/calculator-deployment
+            '''
         }
+    }
+}
+
     }
 
     post {
