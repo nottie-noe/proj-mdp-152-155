@@ -134,3 +134,7 @@ terraform/*
 # Optionally allow ansible folder
 !ansible/
 
+#ignore all config files
+kubeconfig-*
+
+

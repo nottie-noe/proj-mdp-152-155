@@ -42,77 +42,38 @@ pipeline {
         
         stage('Deploy to Kubernetes') {
             steps {
-                withCredentials([
-                    file(credentialsId: 'kubeconfig', variable: 'KUBECONFIG'),
-                    usernamePassword(
-                        credentialsId: 'aws-credentials',
-                        usernameVariable: 'AWS_ACCESS_KEY_ID',
-                        passwordVariable: 'AWS_SECRET_ACCESS_KEY'
-                    )
-                ]) {
-                    script {
-                        // Create a persistent kubeconfig file
-                        sh "cp ${KUBECONFIG} ./kubeconfig"
-                        env.KUBECONFIG = "${WORKSPACE}/kubeconfig"
-                        
-                        sh """
-                        export AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
-                        export AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
-                        export AWS_REGION=${AWS_REGION}
-                        
-                        # Refresh credentials with longer validity
-                        kops export kubecfg --name ${CLUSTER_NAME} \
-                            --state ${KOPS_STATE_STORE} \
-                            --admin=87600h  # 10-year validity
-                        
-                        # Update deployment
-                        sed -i "s|image:.*|image: ${IMAGE_NAME}:${TAG}|g" deployment.yml
-                        
-                        # Apply configuration with validation skip
-                        kubectl apply -f deployment.yml --validate=false
-                        kubectl apply -f service.yml
-                        
-                        # Check rollout status
-                        kubectl rollout status deployment/calculator-deployment
-                        """
-                    }
-                }
-            }
+                withCredentials([file(credentialsId: 'kubeconfig', variable: 'KUBECONFIG_FILE')]) {
+                    sh '''
+                    export KUBECONFIG="$KUBECONFIG_FILE"
+                    # If you must run kops, ensure CLI and AWS creds available
+                    # kops export kubecfg --name ${CLUSTER_NAME} --state ${KOPS_STATE_STORE}
+
+                    sed -i "s|image:.*|image: ${IMAGE_NAME}:${TAG}|g" deployment.yml
+
+                    kubectl apply -f deployment.yml
+                    kubectl apply -f service.yml
+
+                    kubectl rollout status deployment/calculator-deployment
+            '''
         }
+    }
+}
+
     }
 
     post {
         success {
             script {
-                withCredentials([
-                    usernamePassword(
-                        credentialsId: 'aws-credentials',
-                        usernameVariable: 'AWS_ACCESS_KEY_ID',
-                        passwordVariable: 'AWS_SECRET_ACCESS_KEY'
-                    )
-                ]) {
-                    sh """
-                    export AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
-                    export AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
-                    export AWS_REGION=${AWS_REGION}
-                    export KUBECONFIG=${WORKSPACE}/kubeconfig
-                    
-                    # Refresh credentials again
-                    kops export kubecfg --name ${CLUSTER_NAME} \
-                        --state ${KOPS_STATE_STORE} \
-                        --admin=87600h
-                    
-                    # Get LB DNS
-                    LB_DNS=\$(kubectl get service calculator-service -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
-                    echo "✅ Deployment successful! App should be live at http://\$LB_DNS" > lb_dns.txt
-                    """
-                    
-                    def lb_dns = readFile('lb_dns.txt').trim()
-                    echo lb_dns
-                    mail to: 'thandonoe.ndlovu@gmail.com',
-                         subject: "SUCCESS: Jenkins Build #${env.BUILD_NUMBER}",
-                         body: "The Jenkins build was successful.\nApplication deployed at: ${lb_dns}"
-                }
+                def lb_dns = sh(
+                    script: "kubectl get service calculator-service -o jsonpath='{.status.loadBalancer.ingress[0].hostname}'",
+                    returnStdout: true
+                ).trim()
+                
+                echo "✅ Deployment successful! App should be live at http://${lb_dns}"
+                
+                mail to: 'thandonoe.ndlovu@gmail.com',
+                     subject: "SUCCESS: Jenkins Build #${env.BUILD_NUMBER}",
+                     body: "The Jenkins build was successful.\nApplication deployed at: http://${lb_dns}"
             }
         }
 
@@ -124,3 +85,5 @@ pipeline {
         }
     }
 }
+
+
