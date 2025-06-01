@@ -69,24 +69,13 @@ pipeline {
                         echo "Deploying application..."
                         kubectl apply -f deployment.yml
                     '''
-<<<<<<< HEAD
-                }
-                script {
-                    // Capture the service hostname to use later in notifications
-                    env.lb_dns = sh(
-                        script: 'kubectl get service calculator-service -o jsonpath="{.status.loadBalancer.ingress[0].hostname}"',
-                        returnStdout: true
-                    ).trim()
-
-                        echo "Fetching service hostname..."
-                        kubectl get service calculator-service -o "jsonpath={.status.loadBalancer.ingress[0].hostname}"
-=======
 
                     script {
                         env.lb_dns = sh(
                             script: 'kubectl get service calculator-service -o jsonpath="{.status.loadBalancer.ingress[0].hostname}"',
                             returnStdout: true
                         ).trim()
+                        echo "Fetched service hostname: ${env.lb_dns}"
                     }
                 }
             }
@@ -95,11 +84,6 @@ pipeline {
 
     post {
         success {
-                echo "✅ Deployment successful! App should be live at http://${lb_dns}"
-                mail to: 'thandonoe.ndlovu@gmail.com',
-                     subject: "SUCCESS: Jenkins Build #${env.BUILD_NUMBER}",
-                     body: "The Jenkins build was successful.\nApplication deployed at: http://${lb_dns}"
-            }
             echo "✅ Deployment successful! App should be live at http://${env.lb_dns}"
             mail to: 'thandonoe.ndlovu@gmail.com',
                  subject: "SUCCESS: Jenkins Build #${env.BUILD_NUMBER}",
@@ -109,7 +93,6 @@ The Jenkins build was successful.
 Application deployed at:
 http://${env.lb_dns}
 """
->>>>>>> 374e1e3 (file changes)
         }
 
         failure {
