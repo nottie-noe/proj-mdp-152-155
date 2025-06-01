@@ -67,10 +67,17 @@ pipeline {
 
                         echo "Deploying application..."
                         kubectl apply -f deployment.yml
+                    '''
+                }
+                script {
+                    // Capture the service hostname to use later in notifications
+                    env.lb_dns = sh(
+                        script: 'kubectl get service calculator-service -o jsonpath="{.status.loadBalancer.ingress[0].hostname}"',
+                        returnStdout: true
+                    ).trim()
 
                         echo "Fetching service hostname..."
                         kubectl get service calculator-service -o "jsonpath={.status.loadBalancer.ingress[0].hostname}"
-            '''
         }
     }
 
