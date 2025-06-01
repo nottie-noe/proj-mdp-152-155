@@ -67,6 +67,9 @@ pipeline {
 
                         echo "Deploying application..."
                         kubectl apply -f deployment.yml
+
+                        echo "Fetching service hostname..."
+                        kubectl get service calculator-service -o "jsonpath={.status.loadBalancer.ingress[0].hostname}"
             '''
         }
     }
@@ -77,14 +80,7 @@ pipeline {
 
     post {
         success {
-            script {
-                def lb_dns = sh(
-                    script: "kubectl get service calculator-service -o jsonpath='{.status.loadBalancer.ingress[0].hostname}'",
-                    returnStdout: true
-                ).trim()
-                
                 echo "✅ Deployment successful! App should be live at http://${lb_dns}"
-                
                 mail to: 'thandonoe.ndlovu@gmail.com',
                      subject: "SUCCESS: Jenkins Build #${env.BUILD_NUMBER}",
                      body: "The Jenkins build was successful.\nApplication deployed at: http://${lb_dns}"
