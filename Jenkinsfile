@@ -51,14 +51,10 @@ pipeline {
 
                     sed -i "s|image:.*|image: ${IMAGE_NAME}:${TAG}|g" deployment.yml
                     export KUBECONFIG="$KUBECONFIG_FILE"
+                    ls -l $KUBECONFIG
+                    file $KUBECONFIG
                     echo "Testing cluster access..."
-                    kubectl config view
                     kubectl get nodes
-
-                    kubectl apply --validate=false -f deployment.yml
-                    kubectl apply -f service.yml
-
-                    kubectl rollout status deployment/calculator-deployment
             '''
         }
     }
