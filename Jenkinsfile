@@ -55,7 +55,7 @@ pipeline {
                     kubectl config view
                     kubectl get nodes
 
-                    kubectl apply -f deployment.yml
+                    kubectl apply --validate=false -f deployment.yml
                     kubectl apply -f service.yml
 
                     kubectl rollout status deployment/calculator-deployment
