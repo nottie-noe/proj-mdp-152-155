@@ -45,20 +45,27 @@ pipeline {
             steps {
                 withCredentials([file(credentialsId: 'kubeconfig', variable: 'KUBECONFIG_FILE')]) {
                     sh '''
-                    export KUBECONFIG="$KUBECONFIG_FILE"
-                    # If you must run kops, ensure CLI and AWS creds available
-                    # kops export kubecfg --name ${CLUSTER_NAME} --state ${KOPS_STATE_STORE}
+                        echo "Setting KUBECONFIG from Jenkins credential..."
+                        export KUBECONFIG="$KUBECONFIG_FILE"
 
-                    sed -i "s|image:.*|image: ${IMAGE_NAME}:${TAG}|g" deployment.yml
-                    export KUBECONFIG="$KUBECONFIG_FILE"
-                    ls -l $KUBECONFIG
-                    file $KUBECONFIG
-                    echo "Testing cluster access..."
-                    kubectl get nodes
+                        echo "Updating Kubernetes deployment YAML with image ${IMAGE_NAME}:${TAG}..."
+                        sed -i "s|image:.*|image: ${IMAGE_NAME}:${TAG}|g" deployment.yml
+
+                        echo "Verifying kubeconfig file..."
+                        ls -l "$KUBECONFIG"
+                        file "$KUBECONFIG"
+                        cat "$KUBECONFIG"
+
+                        echo "Testing cluster access..."
+                        kubectl get nodes
+
+                        echo "Deploying application..."
+                        kubectl apply -f deployment.yml
             '''
         }
     }
 }
+
 
     }
 
