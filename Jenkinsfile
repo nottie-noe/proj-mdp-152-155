@@ -2,6 +2,7 @@ pipeline {
     agent any
 
     environment {
+        KUBECONFIG = '/var/lib/jenkins/kubeconfig'
         IMAGE_NAME = 'nottiey/javacal-webapp'
         TAG = "${env.BUILD_NUMBER}"
         CLUSTER_NAME = 'prod-cluster.k8s.local'  // Update with your cluster name
