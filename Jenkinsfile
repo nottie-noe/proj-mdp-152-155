@@ -50,6 +50,10 @@ pipeline {
                     # kops export kubecfg --name ${CLUSTER_NAME} --state ${KOPS_STATE_STORE}
 
                     sed -i "s|image:.*|image: ${IMAGE_NAME}:${TAG}|g" deployment.yml
+                    export KUBECONFIG="$KUBECONFIG_FILE"
+                    echo "Testing cluster access..."
+                    kubectl config view
+                    kubectl get nodes
 
                     kubectl apply -f deployment.yml
                     kubectl apply -f service.yml
