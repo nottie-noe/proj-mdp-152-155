@@ -73,10 +73,6 @@ pipeline {
             '''
         }
     }
-}
-
-
-    }
 
     post {
         success {
