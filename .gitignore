@@ -136,5 +136,9 @@ terraform/*
 
 #ignore all config files
 kubeconfig-*
-
+config*
+config.fixed
+kubeconfig-kops-prod
+~./
+path
 
