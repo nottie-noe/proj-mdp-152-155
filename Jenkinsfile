@@ -64,6 +64,9 @@ pipeline {
 
                         echo "Validating Kubernetes context..."
                         kubectl config current-context
+			echo "KUBECONFIG path: $KUBECONFIG"
+  			ls -l $KUBECONFIG
+  			cat $KUBECONFIG | grep "kind"
                         kubectl get nodes
 
                         echo "Deploying application..."
