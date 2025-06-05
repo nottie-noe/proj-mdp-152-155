@@ -1,9 +1,12 @@
 ---
-- name: Set up Kubernetes cluster
+- name: Set up Kubernetes cluster dependencies and create cluster
   hosts: localhost
   become: yes
   vars_files:
-    - ../group_vars/all.yml     # 👈 This loads cluster_name, state_store, etc.
+    - ../group_vars/all.yml     # Loads cluster_name, s3_bucket_name, aws_region, zones, etc.
+
+  vars:
+    common_flags: "--name={{ cluster_name }} --state=s3://{{ s3_bucket_name }}"
 
   tasks:
     - name: Install dependencies

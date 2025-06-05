@@ -1,0 +1,7 @@
+spec:
+  kubeAPIServer:
+    authenticationTokenWebhook: true
+  authentication:
+    aws: {}
+  authorization:
+    rbac: {}

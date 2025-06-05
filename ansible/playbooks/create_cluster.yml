@@ -1,31 +1,30 @@
-- name: Create Kubernetes cluster with Kops
-  hosts: localhost
-  vars:
-    common_flags: "--name={{ cluster_name }} --state=s3://{{ s3_bucket_name }}"
-  tasks:
-    - name: Check if the cluster already exists
-      command: kops get cluster {{ common_flags }}
-      register: cluster_exists
-      ignore_errors: true
+- name: Set common flags
+  set_fact:
+    common_flags: "--name={{ cluster_name }} --state={{ state_store }}"
 
-    - name: Create cluster
-      shell: |
-        kops create cluster \
-          {{ common_flags }} \
-          --zones={{ zones }} \
-          --control-plane-zones={{ zones }} \
-          --node-count={{ node_count }} \
-          --node-size={{ node_instance_type }} \
-          --control-plane-count={{ master_count }} \
-          --control-plane-size={{ master_instance_type }} \
-          --ssh-public-key=~/.ssh/kops-rsa.pub \
-          --cloud-labels="Environment=Prod" \
-          --associate-public-ip=false \
-          --topology=private \
-          --networking=calico \
-          --authorization=RBAC \
-          --yes
-      when: cluster_exists.rc != 0
-      environment:
-        AWS_REGION: "{{ aws_region }}"
+- name: Check if the cluster already exists
+  command: kops get cluster {{ common_flags }}
+  register: cluster_exists
+  ignore_errors: true
+
+- name: Create cluster
+  shell: |
+    kops create cluster \
+      {{ common_flags }} \
+      --zones={{ zones }} \
+      --control-plane-zones={{ zones }} \
+      --node-count={{ node_count }} \
+      --node-size={{ node_instance_type }} \
+      --control-plane-count={{ master_count }} \
+      --control-plane-size={{ master_instance_type }} \
+      --ssh-public-key={{ ssh_key_path }} \
+      --cloud-labels="Environment=Prod" \
+      --associate-public-ip=false \
+      --topology={{ topology }} \
+      --networking={{ networking }} \
+      --authorization=RBAC \
+      --yes
+  when: cluster_exists.rc != 0
+  environment:
+    AWS_REGION: "{{ aws_region }}"
 
