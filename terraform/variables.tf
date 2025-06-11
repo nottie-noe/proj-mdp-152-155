@@ -1,13 +1,13 @@
 variable "region" {
   description = "AWS region"
   type        = string
-  default     = "us-east-1"
+  default     = "us-east-2"
 }
 
 variable "bucket_name" {
   description = "Name of the S3 bucket for KOPS state"
   type        = string
-  default     = "my-kops-state-bucket-12345" # Must be globally unique!
+  default     = "petra-kops-state-bucket-12345" # Must be globally unique!
 }
 
 variable "vpc_cidr" {
@@ -17,7 +17,7 @@ variable "vpc_cidr" {
 }
 
 variable "cluster_name" {
-  description = "Name of the Kubernetes cluster"
+  description = "Name of Kubernetes cluster"
   type        = string
-  default     = "mycluster.k8s.local"
+  default     = "petra-cluster.k8s.local"
 }
